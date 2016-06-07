@@ -1,0 +1,5 @@
+use_frameworks!
+
+target 'PLWebServer_Example' do
+  pod 'PLWebServer', :path => '../../'
+end
