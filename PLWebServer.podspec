@@ -12,6 +12,8 @@ Pod::Spec.new do |s|
   s.osx.deployment_target = '10.7'
   s.requires_arc = true
   
+  s.dependency 'CocoaAsyncSocket', '~> 7.4.3'
+  
   s.default_subspec = 'Core'
   
   s.subspec 'Core' do |cs|
