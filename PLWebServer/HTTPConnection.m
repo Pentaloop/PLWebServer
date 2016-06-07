@@ -654,15 +654,9 @@ static NSMutableArray *recentNonces;
 			[settings setObject:certificates
 						 forKey:(NSString *)kCFStreamSSLCertificates];
 			
-			// Configure this connection to require at least TLS 1.0, to avoid vulnerabilities.
-            settings[GCDAsyncSocketSSLProtocolVersionMin] = @(kTLSProtocol1);
-
-            SSLAuthenticate clientAuth = self.sslClientSideAuthentication;
-            if (clientAuth != kNeverAuthenticate)
-            {
-                settings[GCDAsyncSocketSSLClientSideAuthentication] = @(clientAuth);
-                settings[GCDAsyncSocketManuallyEvaluateTrust] = @YES;
-            }
+            // Configure this connection to use the highest possible SSL level
+            [settings setObject:(NSString *)kCFStreamSocketSecurityLevelNegotiatedSSL
+                         forKey:(NSString *)kCFStreamSSLLevel];
 
             [asyncSocket startTLS:settings];
 		}
