@@ -1943,7 +1943,7 @@ static NSMutableArray *recentNonces;
     // Status code 416 - Requested Range Not Satisfiable
     HTTPMessage *response = [[HTTPMessage alloc] initResponseWithStatusCode:416 description:nil version:HTTPVersion1_1];
     [response setHeaderField:@"Connection" value:@"close"];
-    NSString* contentRangeStr = $sprintf(@"bytes */%llu", length);
+    NSString* contentRangeStr = [NSString stringWithFormat:@"bytes */%llu", length];
     [response setHeaderField:@"Content-Range" value:contentRangeStr];
 
     NSData *responseData = [self preprocessErrorResponse:response];
