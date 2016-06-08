@@ -30,11 +30,15 @@ if(![server start:&error])
 ```
 
 #Roadmap
--   Add a routing mechanism (70% Done)
+-   Add a routing mechanism (Done)
+-   WebSocket handling improvements (Pending)
 -   Improve download performance (Pending) 
 -   Allow WebDav and HTTP on same port (Pending)
 -   Implement UPNP MediaServer (Pending)
 -   Your brilliant ideas... (Pending)
 
 
+#Credits
+- Server is based on CocoaHTTTPServer.
+- Routing mechanism is partially based on GCDWebServer.
 
