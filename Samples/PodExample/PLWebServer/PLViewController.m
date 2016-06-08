@@ -28,7 +28,7 @@
     server = [PLWebServer new];
     server.port = 8080;
     [server addHandlerForMethod:@"GET" path:@"/" requestClass:[PLWebServerRequest class] processBlock:^PLWebServerResponse *(__kindof PLWebServerRequest *request) {
-        return nil;
+        return [[PLWebServerStringResponse alloc] initWithString:@"Hi I am here!!!"];
     }];
     
     NSError *error = nil;
