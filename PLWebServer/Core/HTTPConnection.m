@@ -964,7 +964,7 @@ static NSMutableArray *recentNonces;
 	// We only support version 1.0 and 1.1
 	
 	NSString *version = [request version];
-	if (![version isEqualToString:HTTPVersion1_1] && ![version isEqualToString:HTTPVersion1_0])
+	if (![version isEqualToString:kCFHTTPVersion1_1] && ![version isEqualToString:kCFHTTPVersion1_0])
 	{
 		[self handleVersionNotSupported:version];
 		return;
@@ -1076,7 +1076,7 @@ static NSMutableArray *recentNonces;
 	HTTPLogTrace();
 	
 	// Status Code 206 - Partial Content
-	PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:206 description:nil version:HTTPVersion1_1];
+	PLWebServerResponse *response = [[PLWebServerResponse alloc] initWithStatusCode:206];
 	
 	DDRange range = [[ranges objectAtIndex:0] ddrangeValue];
 	
@@ -1100,7 +1100,7 @@ static NSMutableArray *recentNonces;
 	HTTPLogTrace();
 	
 	// Status Code 206 - Partial Content
-	PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:206 description:nil version:HTTPVersion1_1];
+	PLWebServerResponse *response = [[PLWebServerResponse alloc] initWithStatusCode:206];
 	
 	// We have to send each range using multipart/byteranges
 	// So each byterange has to be prefix'd and suffix'd with the boundry
@@ -1250,7 +1250,7 @@ static NSMutableArray *recentNonces;
 		{
 			status = httpResponse.statusCode;
 		}
-		response = [[PLWebServerResponse alloc] initResponseWithStatusCode:status description:nil version:HTTPVersion1_1];
+		response = [[PLWebServerResponse alloc] initWithStatusCode:status];
 		
 		if (isChunked)
 		{
@@ -1831,7 +1831,7 @@ static NSMutableArray *recentNonces;
 	
 	HTTPLogWarn(@"HTTP Server: Error 505 - Version Not Supported: %@ (%@)", version, [self requestURI]);
 	
-	PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:505 description:nil version:HTTPVersion1_1];
+	PLWebServerResponse *response = [[PLWebServerResponse alloc] initWithStatusCode:kPLWebServerHTTPStatusCode_HTTPVersionNotSupported];
 	response.headers[@"Content-Length"] = @"0";
     
 	NSData *responseData = [self preprocessErrorResponse:response];
@@ -1851,7 +1851,7 @@ static NSMutableArray *recentNonces;
 	HTTPLogInfo(@"HTTP Server: Error 401 - Unauthorized (%@)", [self requestURI]);
 		
 	// Status Code 401 - Unauthorized
-	PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:401 description:nil version:HTTPVersion1_1];
+	PLWebServerResponse *response = [[PLWebServerResponse alloc] initWithStatusCode:kPLWebServerHTTPStatusCode_Unauthorized];
 	response.headers[@"Content-Length"] = @"0";
 	
 	if ([self useDigestAccessAuthentication])
@@ -1882,7 +1882,7 @@ static NSMutableArray *recentNonces;
 	HTTPLogWarn(@"HTTP Server: Error 400 - Bad Request (%@)", [self requestURI]);
 	
 	// Status Code 400 - Bad Request
-	PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:400 description:nil version:HTTPVersion1_1];
+	PLWebServerResponse *response = [[PLWebServerResponse alloc] initWithStatusCode:kPLWebServerHTTPStatusCode_BadRequest];
 	response.headers[@"Content-Length"] = @"0";
 	response.headers[@"Connection"] = @"close";
 	
@@ -1910,7 +1910,7 @@ static NSMutableArray *recentNonces;
 	HTTPLogWarn(@"HTTP Server: Error 405 - Method Not Allowed: %@ (%@)", method, [self requestURI]);
 	
 	// Status code 405 - Method Not Allowed
-	PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:405 description:nil version:HTTPVersion1_1];
+	PLWebServerResponse *response = [[PLWebServerResponse alloc] initWithStatusCode:kPLWebServerHTTPStatusCode_MethodNotAllowed];
 	response.headers[@"Content-Length"] = @"0";
 	response.headers[@"Connection"] = @"close";
 	
@@ -1935,7 +1935,7 @@ static NSMutableArray *recentNonces;
 	HTTPLogInfo(@"HTTP Server: Error 404 - Not Found (%@)", [self requestURI]);
 	
 	// Status Code 404 - Not Found
-	PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:404 description:nil version:HTTPVersion1_1];
+	PLWebServerResponse *response = [[PLWebServerResponse alloc] initWithStatusCode:kPLWebServerHTTPStatusCode_NotFound];
 	response.headers[@"Content-Length"] = @"0";
 	
 	NSData *responseData = [self preprocessErrorResponse:response];
@@ -1953,7 +1953,7 @@ static NSMutableArray *recentNonces;
     HTTPLogWarn(@"HTTP Server: Error 416 - Requested Range Not Satisfiable: %@",[self requestURI]);
 
     // Status code 416 - Requested Range Not Satisfiable
-    PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:416 description:nil version:HTTPVersion1_1];
+    PLWebServerResponse *response = [[PLWebServerResponse alloc] initWithStatusCode:kPLWebServerHTTPStatusCode_RequestedRangeNotSatisfiable];
     response.headers[@"Connection"] = @"close";
     NSString* contentRangeStr = [NSString stringWithFormat:@"bytes */%llu", length];
     response.headers[@"Content-Range"] = contentRangeStr;

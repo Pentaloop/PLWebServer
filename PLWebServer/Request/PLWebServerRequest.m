@@ -88,14 +88,4 @@
 //	return (__bridge_transfer NSData *)CFHTTPMessageCopySerializedMessage(message);
 //}
 
-- (NSData *)body
-{
-	return (__bridge_transfer NSData *)CFHTTPMessageCopyBody(message);
-}
-
-- (void)setBody:(NSData *)body
-{
-	CFHTTPMessageSetBody(message, (__bridge CFDataRef)body);
-}
-
 @end

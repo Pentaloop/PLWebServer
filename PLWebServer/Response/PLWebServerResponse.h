@@ -4,19 +4,26 @@
 
 @interface PLWebServerResponse : NSObject
 
-- (id)initResponseWithStatusCode:(NSInteger)code description:(NSString *)description version:(NSString *)version;
+- (id)initWithStatusCode:(NSInteger)code;
 
 //- (BOOL)appendData:(NSData *)data;
 
 //- (BOOL)isHeaderComplete;
 
-- (void)setHeaderField:(NSString *)headerField value:(NSString *)headerFieldValue;
 
-- (NSData *)messageData;
+/**
+ * Serialized form of the entire message
+ **/
+@property(nonatomic, readonly) NSData* messageData;
 
-- (NSData *)body;
-- (void)setBody:(NSData *)body;
 
+/**
+ * The body of the response message
+**/
+@property(nonatomic, strong) NSData* body;
+
+
+@property(nonatomic, strong) NSString* httpVersion;
 
 /**
  * Returns the length of the data in bytes.

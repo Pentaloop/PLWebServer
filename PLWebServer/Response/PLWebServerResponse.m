@@ -7,49 +7,56 @@
 
 @implementation PLWebServerResponse
 {
-    CFHTTPMessageRef message;
+    NSMutableDictionary* _headers;
 }
 
-- (id)initRequestWithMethod:(NSString *)method URL:(NSURL *)url version:(NSString *)version
-{
-    if ((self = [super init]))
-    {
-        message = CFHTTPMessageCreateRequest(NULL,
-                                             (__bridge CFStringRef)method,
-                                             (__bridge CFURLRef)url,
-                                             (__bridge CFStringRef)version);
-    }
-    return self;
-}
 
-- (id)initResponseWithStatusCode:(NSInteger)code description:(NSString *)description version:(NSString *)version
+- (instancetype)init
 {
-    if ((self = [super init]))
-    {
-        message = CFHTTPMessageCreateResponse(NULL,
-                                              (CFIndex)code,
-                                              (__bridge CFStringRef)description,
-                                              (__bridge CFStringRef)version);
+    self = [super init];
+    if (self) {
+        _headers = [NSMutableDictionary dictionary];
+        self.statusCode = kPLWebServerHTTPStatusCode_OK;
+        self.httpVersion = (NSString *)kCFHTTPVersion1_1;
     }
     return self;
 }
 
 
-- (NSString *)headerField:(NSString *)headerField
+
+- (id)initWithStatusCode:(NSInteger)code
 {
-	return (__bridge_transfer NSString *)CFHTTPMessageCopyHeaderFieldValue(message, (__bridge CFStringRef)headerField);
+    if ((self = [self init]))
+    {
+        self.statusCode = code;
+    }
+    return self;
 }
 
-- (void)setHeaderField:(NSString *)headerField value:(NSString *)headerFieldValue
-{
-	CFHTTPMessageSetHeaderFieldValue(message,
-	                                 (__bridge CFStringRef)headerField,
-	                                 (__bridge CFStringRef)headerFieldValue);
-}
 
 - (NSData *)messageData
 {
+    // Set headers into message
+    NSString* description = nil;
+    CFHTTPMessageRef message = CFHTTPMessageCreateResponse(NULL,
+                                                           self.statusCode,
+                                                           (__bridge CFStringRef)description,
+                                                           (__bridge CFStringRef)self.httpVersion);
+    for (NSString* key in _headers.allKeys) {
+        CFHTTPMessageSetHeaderFieldValue(message,
+                                         (__bridge CFStringRef)key,
+                                         (__bridge CFStringRef)_headers[key]);
+    }
+    
+    if (self.body) {
+        CFHTTPMessageSetBody(message, (__bridge CFDataRef)self.body);
+    }
 	return (__bridge_transfer NSData *)CFHTTPMessageCopySerializedMessage(message);
+}
+
+-(NSMutableDictionary*)headers
+{
+    _headers;
 }
 
 @end

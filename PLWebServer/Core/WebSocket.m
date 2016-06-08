@@ -402,9 +402,9 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	// 8jKS'y:G*Co,Wxa-
 
 	
-	PLWebServerResponse *wsResponse = [[PLWebServerResponse alloc] initResponseWithStatusCode:101
-	                                                              description:@"Web Socket Protocol Handshake"
-	                                                                  version:HTTPVersion1_1];
+    PLWebServerResponse *wsResponse = [[PLWebServerResponse alloc] initWithStatusCode:kPLWebServerHTTPStatusCode_SwitchingProtocols];
+//	                                                              description:@"Web Socket Protocol Handshake"
+//	                                                                  version:HTTPVersion1_1];
 	
 	wsResponse.headers[@"Upgrade"] = @"WebSocket";
 	wsResponse.headers[@"Connection"] = @"Upgrade";
