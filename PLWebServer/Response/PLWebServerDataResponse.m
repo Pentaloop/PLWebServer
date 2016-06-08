@@ -1,16 +1,17 @@
-#import "HTTPDataResponse.h"
+#import "PLWebServerDataResponse.h"
 #import "HTTPLogging.h"
-
-#if ! __has_feature(objc_arc)
-#warning This file must be compiled with ARC. Use -fobjc-arc flag (or convert project to ARC).
-#endif
 
 // Log levels : off, error, warn, info, verbose
 // Other flags: trace
 static const int httpLogLevel = HTTP_LOG_LEVEL_OFF; // | HTTP_LOG_FLAG_TRACE;
 
 
-@implementation HTTPDataResponse
+@implementation PLWebServerDataResponse
+{
+    NSUInteger _offset;
+    NSData *data;
+}
+
 
 - (id)initWithData:(NSData *)dataParam
 {
@@ -18,7 +19,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_OFF; // | HTTP_LOG_FLAG_TRACE;
 	{
 		HTTPLogTrace();
 		
-		offset = 0;
+		_offset = 0;
 		data = dataParam;
 	}
 	return self;
@@ -43,33 +44,33 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_OFF; // | HTTP_LOG_FLAG_TRACE;
 {
 	HTTPLogTrace();
 	
-	return offset;
+	return _offset;
 }
 
 - (void)setOffset:(UInt64)offsetParam
 {
 	HTTPLogTrace2(@"%@[%p]: setOffset:%lu", THIS_FILE, self, (unsigned long)offset);
 	
-	offset = (NSUInteger)offsetParam;
+	_offset = (NSUInteger)offsetParam;
 }
 
 - (NSData *)readDataOfLength:(NSUInteger)lengthParameter
 {
 	HTTPLogTrace2(@"%@[%p]: readDataOfLength:%lu", THIS_FILE, self, (unsigned long)lengthParameter);
 	
-	NSUInteger remaining = [data length] - offset;
+	NSUInteger remaining = [data length] - _offset;
 	NSUInteger length = lengthParameter < remaining ? lengthParameter : remaining;
 	
-	void *bytes = (void *)([data bytes] + offset);
+	void *bytes = (void *)([data bytes] + _offset);
 	
-	offset += length;
+	_offset += length;
 	
 	return [NSData dataWithBytesNoCopy:bytes length:length freeWhenDone:NO];
 }
 
 - (BOOL)isDone
 {
-	BOOL result = (offset == [data length]);
+	BOOL result = (_offset == [data length]);
 	
 	HTTPLogTrace2(@"%@[%p]: isDone - %@", THIS_FILE, self, (result ? @"YES" : @"NO"));
 	

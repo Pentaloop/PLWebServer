@@ -2,11 +2,7 @@
 #import "PLWebServerResponse.h"
 
 
-@interface HTTPDataResponse : PLWebServerResponse
-{
-	NSUInteger offset;
-	NSData *data;
-}
+@interface PLWebServerDataResponse : PLWebServerResponse
 
 - (id)initWithData:(NSData *)data;
 

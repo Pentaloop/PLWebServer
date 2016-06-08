@@ -8,6 +8,10 @@
 
 #import "PLWebServerRequest.h"
 #import "PLWebServerResponse.h"
+#import "PLWebServerDataResponse.h"
+#import "PLWebServerJSONResponse.h"
+#import "PLWebServerStringResponse.h"
+#import "PLWebServerResponse.h"
 #import "PLWebServerCommon.h"
 #import "HTTPServer.h"
 
