@@ -120,6 +120,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 @implementation HTTPConnection
 {
     PLWebServerHandler* _handler;
+    PLWebServerResponse *httpResponse;
 }
 
 static dispatch_queue_t recentNonceQueue;
@@ -578,7 +579,7 @@ static NSMutableArray *recentNonces;
 	NSString *authFormat = @"Digest realm=\"%@\", qop=\"auth\", nonce=\"%@\"";
 	NSString *authInfo = [NSString stringWithFormat:authFormat, [self realm], [[self class] generateNonce]];
 	
-	[response setHeaderField:@"WWW-Authenticate" value:authInfo];
+	response.headers[@"WWW-Authenticate"] = authInfo;
 }
 
 /**
@@ -591,7 +592,7 @@ static NSMutableArray *recentNonces;
 	NSString *authFormat = @"Basic realm=\"%@\"";
 	NSString *authInfo = [NSString stringWithFormat:authFormat, [self realm]];
 	
-	[response setHeaderField:@"WWW-Authenticate" value:authInfo];
+	response.headers[@"WWW-Authenticate"] = authInfo;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1080,11 +1081,11 @@ static NSMutableArray *recentNonces;
 	DDRange range = [[ranges objectAtIndex:0] ddrangeValue];
 	
 	NSString *contentLengthStr = [NSString stringWithFormat:@"%qu", range.length];
-	[response setHeaderField:@"Content-Length" value:contentLengthStr];
+	response.headers[@"Content-Length"] = contentLengthStr;
 	
 	NSString *rangeStr = [NSString stringWithFormat:@"%qu-%qu", range.location, DDMaxRange(range) - 1];
 	NSString *contentRangeStr = [NSString stringWithFormat:@"bytes %@/%qu", rangeStr, contentLength];
-	[response setHeaderField:@"Content-Range" value:contentRangeStr];
+	response.headers[@"Content-Range"] = contentRangeStr;
 	
 	return response;
 }
@@ -1154,10 +1155,10 @@ static NSMutableArray *recentNonces;
 	actualContentLength += [endingBoundryData length];
 	
 	NSString *contentLengthStr = [NSString stringWithFormat:@"%qu", actualContentLength];
-	[response setHeaderField:@"Content-Length" value:contentLengthStr];
+	response.headers[@"Content-Length"] = contentLengthStr;
 	
 	NSString *contentTypeStr = [NSString stringWithFormat:@"multipart/byteranges; boundary=%@", ranges_boundry];
-	[response setHeaderField:@"Content-Type" value:contentTypeStr];
+	response.headers[@"Content-Type"] = contentTypeStr;
 	
 	return response;
 }
@@ -1223,7 +1224,7 @@ static NSMutableArray *recentNonces;
 	if (!isChunked && rangeHeader)
 	{
         // If the response has a non-success status, don't treat this as a range request
-        if (![httpResponse respondsToSelector:@selector(status)] || httpResponse.status < 300) {
+        if (![httpResponse respondsToSelector:@selector(statusCode)] || httpResponse.statusCode < 300) {
             BOOL satisfiableRange;
             if ([self parseRangeRequest:rangeHeader withContentLength:contentLength satisfiableRange:&satisfiableRange])
             {
@@ -1247,18 +1248,18 @@ static NSMutableArray *recentNonces;
 		
 		if ([httpResponse respondsToSelector:@selector(status)])
 		{
-			status = [httpResponse status];
+			status = httpResponse.statusCode;
 		}
 		response = [[PLWebServerResponse alloc] initResponseWithStatusCode:status description:nil version:HTTPVersion1_1];
 		
 		if (isChunked)
 		{
-			[response setHeaderField:@"Transfer-Encoding" value:@"chunked"];
+			response.headers[@"Transfer-Encoding"] = @"chunked";
 		}
 		else
 		{
 			NSString *contentLengthStr = [NSString stringWithFormat:@"%qu", contentLength];
-			[response setHeaderField:@"Content-Length" value:contentLengthStr];
+			response.headers[@"Content-Length"] = contentLengthStr;
 		}
 	}
 	else
@@ -1831,7 +1832,7 @@ static NSMutableArray *recentNonces;
 	HTTPLogWarn(@"HTTP Server: Error 505 - Version Not Supported: %@ (%@)", version, [self requestURI]);
 	
 	PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:505 description:nil version:HTTPVersion1_1];
-	[response setHeaderField:@"Content-Length" value:@"0"];
+	response.headers[@"Content-Length"] = @"0";
     
 	NSData *responseData = [self preprocessErrorResponse:response];
 	[asyncSocket writeData:responseData withTimeout:TIMEOUT_WRITE_ERROR tag:HTTP_RESPONSE];
@@ -1851,7 +1852,7 @@ static NSMutableArray *recentNonces;
 		
 	// Status Code 401 - Unauthorized
 	PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:401 description:nil version:HTTPVersion1_1];
-	[response setHeaderField:@"Content-Length" value:@"0"];
+	response.headers[@"Content-Length"] = @"0";
 	
 	if ([self useDigestAccessAuthentication])
 	{
@@ -1882,8 +1883,8 @@ static NSMutableArray *recentNonces;
 	
 	// Status Code 400 - Bad Request
 	PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:400 description:nil version:HTTPVersion1_1];
-	[response setHeaderField:@"Content-Length" value:@"0"];
-	[response setHeaderField:@"Connection" value:@"close"];
+	response.headers[@"Content-Length"] = @"0";
+	response.headers[@"Connection"] = @"close";
 	
 	NSData *responseData = [self preprocessErrorResponse:response];
 	[asyncSocket writeData:responseData withTimeout:TIMEOUT_WRITE_ERROR tag:HTTP_FINAL_RESPONSE];
@@ -1910,8 +1911,8 @@ static NSMutableArray *recentNonces;
 	
 	// Status code 405 - Method Not Allowed
 	PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:405 description:nil version:HTTPVersion1_1];
-	[response setHeaderField:@"Content-Length" value:@"0"];
-	[response setHeaderField:@"Connection" value:@"close"];
+	response.headers[@"Content-Length"] = @"0";
+	response.headers[@"Connection"] = @"close";
 	
 	NSData *responseData = [self preprocessErrorResponse:response];
 	[asyncSocket writeData:responseData withTimeout:TIMEOUT_WRITE_ERROR tag:HTTP_FINAL_RESPONSE];
@@ -1935,7 +1936,7 @@ static NSMutableArray *recentNonces;
 	
 	// Status Code 404 - Not Found
 	PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:404 description:nil version:HTTPVersion1_1];
-	[response setHeaderField:@"Content-Length" value:@"0"];
+	response.headers[@"Content-Length"] = @"0";
 	
 	NSData *responseData = [self preprocessErrorResponse:response];
 	[asyncSocket writeData:responseData withTimeout:TIMEOUT_WRITE_ERROR tag:HTTP_RESPONSE];
@@ -1953,9 +1954,9 @@ static NSMutableArray *recentNonces;
 
     // Status code 416 - Requested Range Not Satisfiable
     PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:416 description:nil version:HTTPVersion1_1];
-    [response setHeaderField:@"Connection" value:@"close"];
+    response.headers[@"Connection"] = @"close";
     NSString* contentRangeStr = [NSString stringWithFormat:@"bytes */%llu", length];
-    [response setHeaderField:@"Content-Range" value:contentRangeStr];
+    response.headers[@"Content-Range"] = contentRangeStr;
 
     NSData *responseData = [self preprocessErrorResponse:response];
     [asyncSocket writeData:responseData withTimeout:TIMEOUT_WRITE_ERROR tag:HTTP_FINAL_RESPONSE];
@@ -2020,15 +2021,15 @@ static NSMutableArray *recentNonces;
 	
 	// Add standard headers
 	NSString *now = [self dateAsString:[NSDate date]];
-	[response setHeaderField:@"Date" value:now];
+	response.headers[@"Date"] = now;
 	
 	// Add server capability headers
-	[response setHeaderField:@"Accept-Ranges" value:@"bytes"];
+	response.headers[@"Accept-Ranges"] = @"bytes";
 	
 	// Add optional response headers
-	if ([httpResponse respondsToSelector:@selector(httpHeaders)])
+	if ([httpResponse respondsToSelector:@selector(headers)])
 	{
-		NSDictionary *responseHeaders = [httpResponse httpHeaders];
+		NSDictionary *responseHeaders = [httpResponse headers];
 		
 		NSEnumerator *keyEnumerator = [responseHeaders keyEnumerator];
 		NSString *key;
@@ -2037,7 +2038,7 @@ static NSMutableArray *recentNonces;
 		{
 			NSString *value = [responseHeaders objectForKey:key];
 			
-			[response setHeaderField:key value:value];
+			response.headers[key] = value;
 		}
 	}
 	
@@ -2068,20 +2069,20 @@ static NSMutableArray *recentNonces;
 	//     [response setBody:msgData];
 	//     
 	//     NSString *contentLengthStr = [NSString stringWithFormat:@"%lu", (unsigned long)[msgData length]];
-	//     [response setHeaderField:@"Content-Length" value:contentLengthStr];
+	//     [response.headers[@"Content-Length" value:contentLengthStr];
 	// }
 	
 	// Add standard headers
 	NSString *now = [self dateAsString:[NSDate date]];
-	[response setHeaderField:@"Date" value:now];
+	response.headers[@"Date"] = now;
 	
 	// Add server capability headers
-	[response setHeaderField:@"Accept-Ranges" value:@"bytes"];
+	response.headers[@"Accept-Ranges"] = @"bytes";
 	
 	// Add optional response headers
-	if ([httpResponse respondsToSelector:@selector(httpHeaders)])
+	if ([httpResponse respondsToSelector:@selector(headers)])
 	{
-		NSDictionary *responseHeaders = [httpResponse httpHeaders];
+		NSDictionary *responseHeaders = [httpResponse headers];
 		
 		NSEnumerator *keyEnumerator = [responseHeaders keyEnumerator];
 		NSString *key;
@@ -2090,7 +2091,7 @@ static NSMutableArray *recentNonces;
 		{
 			NSString *value = [responseHeaders objectForKey:key];
 			
-			[response setHeaderField:key value:value];
+			response.headers[key] = value;
 		}
 	}
 	

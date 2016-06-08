@@ -50,7 +50,7 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_OFF; // | HTTP_LOG_FLAG_TRACE;
 	return YES;
 }
 
-- (NSDictionary *)httpHeaders
+- (NSDictionary *)headers
 {
 	HTTPLogTrace();
 	

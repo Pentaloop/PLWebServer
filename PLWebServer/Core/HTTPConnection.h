@@ -50,7 +50,7 @@
 	NSString *nonce;
 	long lastNC;
 	
-	PLWebServerResponse *httpResponse;
+	
 	
 	NSMutableArray *ranges;
 	NSMutableArray *ranges_headers;

@@ -11,6 +11,7 @@
 
 #import "PLWebServerRequest.h"
 #import "PLWebServerResponse.h"
+#import "PLWebServerHTTPStatusCodes.h"
 
 typedef PLWebServerRequest* (^PLWebServerMatchBlock)(PLWebServerRequest* request);
 typedef PLWebServerResponse* (^PLWebServerProcessBlock)(__kindof PLWebServerRequest* request);

@@ -11,6 +11,7 @@
 #import "PLWebServerDataResponse.h"
 #import "PLWebServerJSONResponse.h"
 #import "PLWebServerStringResponse.h"
+#import "PLWebServerErrorResponse.h"
 #import "PLWebServerResponse.h"
 #import "PLWebServerCommon.h"
 #import "HTTPServer.h"

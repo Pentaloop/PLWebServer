@@ -1,20 +1,35 @@
 #import <Foundation/Foundation.h>
-
+#import "PLWebServerHTTPStatusCodes.h"
+#import "HTTPLogging.h"
 
 @interface PLWebServerResponse : NSObject
+
+- (id)initResponseWithStatusCode:(NSInteger)code description:(NSString *)description version:(NSString *)version;
+
+//- (BOOL)appendData:(NSData *)data;
+
+//- (BOOL)isHeaderComplete;
+
+- (void)setHeaderField:(NSString *)headerField value:(NSString *)headerFieldValue;
+
+- (NSData *)messageData;
+
+- (NSData *)body;
+- (void)setBody:(NSData *)body;
+
 
 /**
  * Returns the length of the data in bytes.
  * If you don't know the length in advance, implement the isChunked method and have it return YES.
 **/
-- (UInt64)contentLength;
+@property(atomic) UInt64 contentLength;
+
 
 /**
  * The HTTP server supports range requests in order to allow things like
  * file download resumption and optimized streaming on mobile devices.
 **/
-- (UInt64)offset;
-- (void)setOffset:(UInt64)offset;
+@property(atomic) UInt64 offset;
 
 /**
  * Returns the data for the response.
@@ -59,13 +74,13 @@
  * Status code for response.
  * Allows for responses such as redirect (301), etc.
 **/
-- (NSInteger)status;
+@property(atomic) NSInteger statusCode;
 
 /**
  * If you want to add any extra HTTP headers to the response,
  * simply return them in a dictionary in this method.
 **/
-- (NSDictionary *)httpHeaders;
+@property(nonatomic, readonly) NSMutableDictionary* headers;
 
 /**
  * If you don't know the content-length in advance,
@@ -82,25 +97,6 @@
  * invoke any methods on the HTTPConnection after this method is called (as the connection may be deallocated).
 **/
 - (void)connectionDidClose;
-
-
-
-- (id)initEmptyRequest;
-
-- (id)initRequestWithMethod:(NSString *)method URL:(NSURL *)url version:(NSString *)version;
-
-- (id)initResponseWithStatusCode:(NSInteger)code description:(NSString *)description version:(NSString *)version;
-
-- (BOOL)appendData:(NSData *)data;
-
-- (BOOL)isHeaderComplete;
-
-- (void)setHeaderField:(NSString *)headerField value:(NSString *)headerFieldValue;
-
-- (NSData *)messageData;
-
-- (NSData *)body;
-- (void)setBody:(NSData *)body;
 
 @end
 

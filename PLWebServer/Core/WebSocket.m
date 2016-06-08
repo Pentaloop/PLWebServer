@@ -406,8 +406,8 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	                                                              description:@"Web Socket Protocol Handshake"
 	                                                                  version:HTTPVersion1_1];
 	
-	[wsResponse setHeaderField:@"Upgrade" value:@"WebSocket"];
-	[wsResponse setHeaderField:@"Connection" value:@"Upgrade"];
+	wsResponse.headers[@"Upgrade"] = @"WebSocket";
+	wsResponse.headers[@"Connection"] = @"Upgrade";
 	
 	// Note: It appears that WebSocket-Origin and WebSocket-Location
 	// are required for Google's Chrome implementation to work properly.
@@ -424,12 +424,12 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	NSString *originField = isVersion76 ? @"Sec-WebSocket-Origin" : @"WebSocket-Origin";
 	NSString *locationField = isVersion76 ? @"Sec-WebSocket-Location" : @"WebSocket-Location";
 	
-	[wsResponse setHeaderField:originField value:originValue];
-	[wsResponse setHeaderField:locationField value:locationValue];
+	wsResponse.headers[originField] = originValue;
+	wsResponse.headers[locationField] = locationValue;
 	
 	NSString *acceptValue = [self secWebSocketKeyResponseHeaderValue];
 	if (acceptValue) {
-		[wsResponse setHeaderField: @"Sec-WebSocket-Accept" value: acceptValue];
+		wsResponse.headers[@"Sec-WebSocket-Accept"] = acceptValue;
 	}
 
 	NSData *responseHeaders = [wsResponse messageData];
