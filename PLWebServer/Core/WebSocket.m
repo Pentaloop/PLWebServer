@@ -1,5 +1,6 @@
 #import "WebSocket.h"
-#import "HTTPMessage.h"
+#import "PLWebServerRequest.h"
+#import "PLWebServerResponse.h"
 #import "GCDAsyncSocket.h"
 #import "DDNumber.h"
 #import "DDData.h"
@@ -96,7 +97,7 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	NSData *maskingKey;
 }
 
-+ (BOOL)isWebSocketRequest:(HTTPMessage *)request
++ (BOOL)isWebSocketRequest:(PLWebServerRequest *)request
 {
 	// Request (Draft 75):
 	// 
@@ -125,8 +126,8 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	// If we find them, and they have the proper value,
 	// we can safely assume this is a websocket request.
 	
-	NSString *upgradeHeaderValue = [request headerField:@"Upgrade"];
-	NSString *connectionHeaderValue = [request headerField:@"Connection"];
+	NSString *upgradeHeaderValue = request.headers[@"Upgrade"];
+	NSString *connectionHeaderValue = request.headers[@"Connection"];
 	
 	BOOL isWebSocket = YES;
 	
@@ -145,10 +146,10 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	return isWebSocket;
 }
 
-+ (BOOL)isVersion76Request:(HTTPMessage *)request
++ (BOOL)isVersion76Request:(PLWebServerRequest *)request
 {
-	NSString *key1 = [request headerField:@"Sec-WebSocket-Key1"];
-	NSString *key2 = [request headerField:@"Sec-WebSocket-Key2"];
+	NSString *key1 = request.headers[@"Sec-WebSocket-Key1"];
+	NSString *key2 = request.headers[@"Sec-WebSocket-Key2"];
 	
 	BOOL isVersion76;
 	
@@ -164,9 +165,9 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	return isVersion76;
 }
 
-+ (BOOL)isRFC6455Request:(HTTPMessage *)request
++ (BOOL)isRFC6455Request:(PLWebServerRequest *)request
 {
-	NSString *key = [request headerField:@"Sec-WebSocket-Key"];
+	NSString *key = request.headers[@"Sec-WebSocket-Key"];
 	BOOL isRFC6455 = (key != nil);
 
 	HTTPLogTrace2(@"%@: %@ - %@", THIS_FILE, THIS_METHOD, (isRFC6455 ? @"YES" : @"NO"));
@@ -180,7 +181,7 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 
 @synthesize websocketQueue;
 
-- (id)initWithRequest:(HTTPMessage *)aRequest socket:(GCDAsyncSocket *)socket
+- (id)initWithRequest:(PLWebServerRequest *)aRequest socket:(GCDAsyncSocket *)socket
 {
 	HTTPLogTrace();
 	
@@ -191,13 +192,13 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	
 	if ((self = [super init]))
 	{
-		if (HTTP_LOG_VERBOSE)
-		{
-			NSData *requestHeaders = [aRequest messageData];
-			
-			NSString *temp = [[NSString alloc] initWithData:requestHeaders encoding:NSUTF8StringEncoding];
-			HTTPLogVerbose(@"%@[%p] Request Headers:\n%@", THIS_FILE, self, temp);
-		}
+//		if (HTTP_LOG_VERBOSE)
+//		{
+//			NSData *requestHeaders = [aRequest messageData];
+//			
+//			NSString *temp = [[NSString alloc] initWithData:requestHeaders encoding:NSUTF8StringEncoding];
+//			HTTPLogVerbose(@"%@[%p] Request Headers:\n%@", THIS_FILE, self, temp);
+//		}
 		
 		websocketQueue = dispatch_queue_create("WebSocket", NULL);
 		request = aRequest;
@@ -306,7 +307,7 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 {
 	HTTPLogTrace();
 	
-	NSString *origin = [request headerField:@"Origin"];
+	NSString *origin = request.headers[@"Origin"];
 	
 	if (origin == nil)
 	{
@@ -327,9 +328,9 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	NSString *location;
 	
 	NSString *scheme = [asyncSocket isSecure] ? @"wss" : @"ws";
-	NSString *host = [request headerField:@"Host"];
+	NSString *host = request.headers[@"Host"];
 	
-	NSString *requestUri = [[request url] relativeString];
+	NSString *requestUri = request.URL.relativeString;
 	
 	if (host == nil)
 	{
@@ -346,7 +347,7 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 }
 
 - (NSString *)secWebSocketKeyResponseHeaderValue {
-	NSString *key = [request headerField: @"Sec-WebSocket-Key"];
+	NSString *key = request.headers[ @"Sec-WebSocket-Key"];
 	NSString *guid = @"258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 	return [[key stringByAppendingString: guid] dataUsingEncoding: NSUTF8StringEncoding].sha1Digest.base64Encoded;
 }
@@ -401,7 +402,7 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	// 8jKS'y:G*Co,Wxa-
 
 	
-	HTTPMessage *wsResponse = [[HTTPMessage alloc] initResponseWithStatusCode:101
+	PLWebServerResponse *wsResponse = [[PLWebServerResponse alloc] initResponseWithStatusCode:101
 	                                                              description:@"Web Socket Protocol Handshake"
 	                                                                  version:HTTPVersion1_1];
 	
@@ -497,8 +498,8 @@ static inline NSUInteger WS_PAYLOAD_LENGTH(UInt8 frame)
 	NSAssert(isVersion76, @"WebSocket version 75 doesn't contain a response body");
 	NSAssert([d3 length] == 8, @"Invalid requestBody length");
 	
-	NSString *key1 = [request headerField:@"Sec-WebSocket-Key1"];
-	NSString *key2 = [request headerField:@"Sec-WebSocket-Key2"];
+	NSString *key1 = request.headers[@"Sec-WebSocket-Key1"];
+	NSString *key2 = request.headers[@"Sec-WebSocket-Key2"];
 	
 	NSData *d1 = [self processKey:key1];
 	NSData *d2 = [self processKey:key2];

@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 
-@class HTTPMessage;
+@class PLWebServerRequest;
 @class GCDAsyncSocket;
 
 
@@ -10,7 +10,7 @@
 {
 	dispatch_queue_t websocketQueue;
 	
-	HTTPMessage *request;
+	PLWebServerRequest *request;
 	GCDAsyncSocket *asyncSocket;
 	
 	NSData *term;
@@ -22,9 +22,9 @@
 	id __unsafe_unretained delegate;
 }
 
-+ (BOOL)isWebSocketRequest:(HTTPMessage *)request;
++ (BOOL)isWebSocketRequest:(PLWebServerRequest *)request;
 
-- (id)initWithRequest:(HTTPMessage *)request socket:(GCDAsyncSocket *)socket;
+- (id)initWithRequest:(PLWebServerRequest *)request socket:(GCDAsyncSocket *)socket;
 
 /**
  * Delegate option.

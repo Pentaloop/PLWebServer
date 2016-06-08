@@ -1,7 +1,7 @@
 #import <Foundation/Foundation.h>
 
 
-@protocol HTTPResponse
+@interface PLWebServerResponse : NSObject
 
 /**
  * Returns the length of the data in bytes.
@@ -33,7 +33,7 @@
 **/
 - (BOOL)isDone;
 
-@optional
+//@optional
 
 /**
  * If you need time to calculate any part of the HTTP response headers (status code or header fields),
@@ -82,6 +82,25 @@
  * invoke any methods on the HTTPConnection after this method is called (as the connection may be deallocated).
 **/
 - (void)connectionDidClose;
+
+
+
+- (id)initEmptyRequest;
+
+- (id)initRequestWithMethod:(NSString *)method URL:(NSURL *)url version:(NSString *)version;
+
+- (id)initResponseWithStatusCode:(NSInteger)code description:(NSString *)description version:(NSString *)version;
+
+- (BOOL)appendData:(NSData *)data;
+
+- (BOOL)isHeaderComplete;
+
+- (void)setHeaderField:(NSString *)headerField value:(NSString *)headerFieldValue;
+
+- (NSData *)messageData;
+
+- (NSData *)body;
+- (void)setBody:(NSData *)body;
 
 @end
 

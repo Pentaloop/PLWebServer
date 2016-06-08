@@ -1,8 +1,8 @@
 #import <Foundation/Foundation.h>
-#import "HTTPResponse.h"
+#import "PLWebServerResponse.h"
 
 
-@interface HTTPRedirectResponse : NSObject <HTTPResponse>
+@interface HTTPRedirectResponse : PLWebServerResponse
 {
 	NSString *redirectPath;
 }

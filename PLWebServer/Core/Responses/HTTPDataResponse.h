@@ -1,8 +1,8 @@
 #import <Foundation/Foundation.h>
-#import "HTTPResponse.h"
+#import "PLWebServerResponse.h"
 
 
-@interface HTTPDataResponse : NSObject <HTTPResponse>
+@interface HTTPDataResponse : PLWebServerResponse
 {
 	NSUInteger offset;
 	NSData *data;

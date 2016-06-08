@@ -1,8 +1,8 @@
 #import "GCDAsyncSocket.h"
-#import "HTTPServer.h"
+#import "PLWebServer.h"
 #import "HTTPConnection.h"
-#import "HTTPMessage.h"
-#import "HTTPResponse.h"
+#import "PLWebServerRequest.h"
+#import "PLWebServerResponse.h"
 #import "HTTPAuthenticationRequest.h"
 #import "DDNumber.h"
 #import "DDRange.h"
@@ -11,6 +11,7 @@
 #import "HTTPAsyncFileResponse.h"
 #import "WebSocket.h"
 #import "HTTPLogging.h"
+#import "PLWebServerHandler.h"
 
 #if ! __has_feature(objc_arc)
 #warning This file must be compiled with ARC. Use -fobjc-arc flag (or convert project to ARC).
@@ -117,6 +118,9 @@ static const int httpLogLevel = HTTP_LOG_LEVEL_WARN; // | HTTP_LOG_FLAG_TRACE;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 @implementation HTTPConnection
+{
+    PLWebServerHandler* _handler;
+}
 
 static dispatch_queue_t recentNonceQueue;
 static NSMutableArray *recentNonces;
@@ -229,7 +233,7 @@ static NSMutableArray *recentNonces;
 		lastNC = 0;
 		
 		// Create a new HTTP message
-		request = [[HTTPMessage alloc] initEmptyRequest];
+		request = [PLWebServerRequest new];
 		
 		numHeaderLines = 0;
 		
@@ -277,7 +281,7 @@ static NSMutableArray *recentNonces;
 	// - If accepting an upload, is the size of the data being uploaded too big?
 	//   To do this you can check the requestContentLength variable.
 	// 
-	// For more information, you can always access the HTTPMessage request variable.
+	// For more information, you can always access the PLWebServerRequest request variable.
 	// 
 	// You should fall through with a call to [super supportsMethod:method atPath:path]
 	// 
@@ -463,7 +467,7 @@ static NSMutableArray *recentNonces;
 			return NO;
 		}
 		
-		NSString *url = [[request url] relativeString];
+		NSString *url = request.URL.relativeString;
 		
 		if (![url isEqualToString:[auth uri]])
 		{
@@ -567,7 +571,7 @@ static NSMutableArray *recentNonces;
 /**
  * Adds a digest access authentication challenge to the given response.
 **/
-- (void)addDigestAuthChallenge:(HTTPMessage *)response
+- (void)addDigestAuthChallenge:(PLWebServerResponse*)response
 {
 	HTTPLogTrace();
 	
@@ -580,7 +584,7 @@ static NSMutableArray *recentNonces;
 /**
  * Adds a basic authentication challenge to the given response.
 **/
-- (void)addBasicAuthChallenge:(HTTPMessage *)response
+- (void)addBasicAuthChallenge:(PLWebServerResponse*)response
 {
 	HTTPLogTrace();
 	
@@ -748,7 +752,7 @@ static NSMutableArray *recentNonces;
 	
 	NSDictionary *result = nil;
 	
-	NSURL *url = [request url];
+	NSURL *url = request.URL;
 	if(url)
 	{
 		NSString *query = [url query];
@@ -935,25 +939,25 @@ static NSMutableArray *recentNonces;
 {
 	if(request == nil) return nil;
 	
-	return [[request url] relativeString];
+	return request.URL.relativeString;
 }
 
 /**
  * This method is called after a full HTTP request has been received.
- * The current request is in the HTTPMessage request variable.
+ * The current request is in the PLWebServerRequest request variable.
 **/
 - (void)replyToHTTPRequest
 {
 	HTTPLogTrace();
 	
-#if HTTP_LOG_VERBOSE
-	{
-		NSData *tempData = [request messageData];
-		
-		NSString *tempStr = [[NSString alloc] initWithData:tempData encoding:NSUTF8StringEncoding];
-		HTTPLogVerbose(@"%@[%p]: Received HTTP request:\n%@", THIS_FILE, self, tempStr);
-	}
-#endif
+//#if HTTP_LOG_VERBOSE
+//	{
+//		NSData *tempData = [request messageData];
+//		
+//		NSString *tempStr = [[NSString alloc] initWithData:tempData encoding:NSUTF8StringEncoding];
+//		HTTPLogVerbose(@"%@[%p]: Received HTTP request:\n%@", THIS_FILE, self, tempStr);
+//	}
+//#endif
 	
 	// Check the HTTP version
 	// We only support version 1.0 and 1.1
@@ -1043,28 +1047,35 @@ static NSMutableArray *recentNonces;
 	// Note: We already checked to ensure the method was supported in onSocket:didReadData:withTag:
 	
 	// Respond properly to HTTP 'GET' and 'HEAD' commands
-	httpResponse = [self httpResponseForMethod:method URI:uri];
-	
-	if (httpResponse == nil)
-	{
-		[self handleResourceNotFound];
-		return;
-	}
-	
-	[self sendResponseHeadersAndBody];
+    
+    if (_handler) {
+        httpResponse = _handler.processBlock(request);
+    }
+    
+    if (!httpResponse) {
+        httpResponse = [self httpResponseForMethod:method URI:uri];
+    }
+    
+    if (httpResponse == nil)
+    {
+        [self handleResourceNotFound];
+        return;
+    }
+    
+    [self sendResponseHeadersAndBody];
 }
 
 /**
  * Prepares a single-range response.
- * 
- * Note: The returned HTTPMessage is owned by the sender, who is responsible for releasing it.
+ *
+ * Note: The returned PLWebServerRequest is owned by the sender, who is responsible for releasing it.
 **/
-- (HTTPMessage *)newUniRangeResponse:(UInt64)contentLength
+- (PLWebServerRequest *)newUniRangeResponse:(UInt64)contentLength
 {
 	HTTPLogTrace();
 	
 	// Status Code 206 - Partial Content
-	HTTPMessage *response = [[HTTPMessage alloc] initResponseWithStatusCode:206 description:nil version:HTTPVersion1_1];
+	PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:206 description:nil version:HTTPVersion1_1];
 	
 	DDRange range = [[ranges objectAtIndex:0] ddrangeValue];
 	
@@ -1081,14 +1092,14 @@ static NSMutableArray *recentNonces;
 /**
  * Prepares a multi-range response.
  * 
- * Note: The returned HTTPMessage is owned by the sender, who is responsible for releasing it.
+ * Note: The returned PLWebServerRequest is owned by the sender, who is responsible for releasing it.
 **/
-- (HTTPMessage *)newMultiRangeResponse:(UInt64)contentLength
+- (PLWebServerRequest *)newMultiRangeResponse:(UInt64)contentLength
 {
 	HTTPLogTrace();
 	
 	// Status Code 206 - Partial Content
-	HTTPMessage *response = [[HTTPMessage alloc] initResponseWithStatusCode:206 description:nil version:HTTPVersion1_1];
+	PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:206 description:nil version:HTTPVersion1_1];
 	
 	// We have to send each range using multipart/byteranges
 	// So each byterange has to be prefix'd and suffix'd with the boundry
@@ -1202,7 +1213,7 @@ static NSMutableArray *recentNonces;
 	}
 	
 	// Check for specific range request
-	NSString *rangeHeader = [request headerField:@"Range"];
+	NSString *rangeHeader = request.headers[@"Range"];
 	
 	BOOL isRangeRequest = NO;
 	
@@ -1226,7 +1237,7 @@ static NSMutableArray *recentNonces;
         }
 	}
 	
-	HTTPMessage *response;
+	PLWebServerResponse *response;
 	
 	if (!isRangeRequest)
 	{
@@ -1238,7 +1249,7 @@ static NSMutableArray *recentNonces;
 		{
 			status = [httpResponse status];
 		}
-		response = [[HTTPMessage alloc] initResponseWithStatusCode:status description:nil version:HTTPVersion1_1];
+		response = [[PLWebServerResponse alloc] initResponseWithStatusCode:status description:nil version:HTTPVersion1_1];
 		
 		if (isChunked)
 		{
@@ -1723,7 +1734,7 @@ static NSMutableArray *recentNonces;
  * HTTPFileResponse is a wrapper for an NSFileHandle object, and is the preferred way to send a file response.
  * HTTPDataResponse is a wrapper for an NSData object, and may be used to send a custom response.
 **/
-- (NSObject<HTTPResponse> *)httpResponseForMethod:(NSString *)method URI:(NSString *)path
+- (PLWebServerResponse*)httpResponseForMethod:(NSString *)method URI:(NSString *)path
 {
 	HTTPLogTrace();
 	
@@ -1819,7 +1830,7 @@ static NSMutableArray *recentNonces;
 	
 	HTTPLogWarn(@"HTTP Server: Error 505 - Version Not Supported: %@ (%@)", version, [self requestURI]);
 	
-	HTTPMessage *response = [[HTTPMessage alloc] initResponseWithStatusCode:505 description:nil version:HTTPVersion1_1];
+	PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:505 description:nil version:HTTPVersion1_1];
 	[response setHeaderField:@"Content-Length" value:@"0"];
     
 	NSData *responseData = [self preprocessErrorResponse:response];
@@ -1839,7 +1850,7 @@ static NSMutableArray *recentNonces;
 	HTTPLogInfo(@"HTTP Server: Error 401 - Unauthorized (%@)", [self requestURI]);
 		
 	// Status Code 401 - Unauthorized
-	HTTPMessage *response = [[HTTPMessage alloc] initResponseWithStatusCode:401 description:nil version:HTTPVersion1_1];
+	PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:401 description:nil version:HTTPVersion1_1];
 	[response setHeaderField:@"Content-Length" value:@"0"];
 	
 	if ([self useDigestAccessAuthentication])
@@ -1870,7 +1881,7 @@ static NSMutableArray *recentNonces;
 	HTTPLogWarn(@"HTTP Server: Error 400 - Bad Request (%@)", [self requestURI]);
 	
 	// Status Code 400 - Bad Request
-	HTTPMessage *response = [[HTTPMessage alloc] initResponseWithStatusCode:400 description:nil version:HTTPVersion1_1];
+	PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:400 description:nil version:HTTPVersion1_1];
 	[response setHeaderField:@"Content-Length" value:@"0"];
 	[response setHeaderField:@"Connection" value:@"close"];
 	
@@ -1898,7 +1909,7 @@ static NSMutableArray *recentNonces;
 	HTTPLogWarn(@"HTTP Server: Error 405 - Method Not Allowed: %@ (%@)", method, [self requestURI]);
 	
 	// Status code 405 - Method Not Allowed
-	HTTPMessage *response = [[HTTPMessage alloc] initResponseWithStatusCode:405 description:nil version:HTTPVersion1_1];
+	PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:405 description:nil version:HTTPVersion1_1];
 	[response setHeaderField:@"Content-Length" value:@"0"];
 	[response setHeaderField:@"Connection" value:@"close"];
 	
@@ -1923,7 +1934,7 @@ static NSMutableArray *recentNonces;
 	HTTPLogInfo(@"HTTP Server: Error 404 - Not Found (%@)", [self requestURI]);
 	
 	// Status Code 404 - Not Found
-	HTTPMessage *response = [[HTTPMessage alloc] initResponseWithStatusCode:404 description:nil version:HTTPVersion1_1];
+	PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:404 description:nil version:HTTPVersion1_1];
 	[response setHeaderField:@"Content-Length" value:@"0"];
 	
 	NSData *responseData = [self preprocessErrorResponse:response];
@@ -1941,7 +1952,7 @@ static NSMutableArray *recentNonces;
     HTTPLogWarn(@"HTTP Server: Error 416 - Requested Range Not Satisfiable: %@",[self requestURI]);
 
     // Status code 416 - Requested Range Not Satisfiable
-    HTTPMessage *response = [[HTTPMessage alloc] initResponseWithStatusCode:416 description:nil version:HTTPVersion1_1];
+    PLWebServerResponse *response = [[PLWebServerResponse alloc] initResponseWithStatusCode:416 description:nil version:HTTPVersion1_1];
     [response setHeaderField:@"Connection" value:@"close"];
     NSString* contentRangeStr = [NSString stringWithFormat:@"bytes */%llu", length];
     [response setHeaderField:@"Content-Range" value:contentRangeStr];
@@ -2000,7 +2011,7 @@ static NSMutableArray *recentNonces;
  * This method is called immediately prior to sending the response headers.
  * This method adds standard header fields, and then converts the response to an NSData object.
 **/
-- (NSData *)preprocessResponse:(HTTPMessage *)response
+- (NSData *)preprocessResponse:(PLWebServerResponse *)response
 {
 	HTTPLogTrace();
 	
@@ -2037,7 +2048,7 @@ static NSMutableArray *recentNonces;
  * This method is called immediately prior to sending the response headers (for an error).
  * This method adds standard header fields, and then converts the response to an NSData object.
 **/
-- (NSData *)preprocessErrorResponse:(HTTPMessage *)response;
+- (NSData *)preprocessErrorResponse:(PLWebServerResponse *)response;
 {
 	HTTPLogTrace();
 	
@@ -2130,6 +2141,16 @@ static NSMutableArray *recentNonces;
 		else
 		{
 			// We have an entire HTTP request header from the client
+            PLWebServerRequest* _request = nil;
+            for (_handler in config.server.handlers) {
+                _request = _handler.matchBlock(request);
+                if (_request) {
+                    break;
+                }
+            }
+            if (_request) {
+                request = _request;
+            }
 			
 			// Extract the method (such as GET, HEAD, POST, etc)
 			NSString *method = [request method];
@@ -2138,10 +2159,10 @@ static NSMutableArray *recentNonces;
 			NSString *uri = [self requestURI];
 			
 			// Check for a Transfer-Encoding field
-			NSString *transferEncoding = [request headerField:@"Transfer-Encoding"];
+			NSString *transferEncoding = request.headers[@"Transfer-Encoding"];
       
 			// Check for a Content-Length field
-			NSString *contentLength = [request headerField:@"Content-Length"];
+			NSString *contentLength = request.headers[@"Content-Length"];
 			
 			// Content-Length MUST be present for upload methods (such as POST or PUT)
 			// and MUST NOT be present for other methods.
@@ -2538,7 +2559,7 @@ static NSMutableArray *recentNonces;
 				// finishBody method and forgot to call [super finishBody].
 				NSAssert(request == nil, @"Request not properly released in finishBody");
 				
-				request = [[HTTPMessage alloc] initEmptyRequest];
+				request = [PLWebServerRequest new];
 				
 				numHeaderLines = 0;
 				sentResponseHeaders = NO;
@@ -2572,7 +2593,7 @@ static NSMutableArray *recentNonces;
  * 
  * This informs us that the response object has generated more data that we may be able to send.
 **/
-- (void)responseHasAvailableData:(NSObject<HTTPResponse> *)sender
+- (void)responseHasAvailableData:(PLWebServerResponse*)sender
 {
 	HTTPLogTrace();
 	
@@ -2615,7 +2636,7 @@ static NSMutableArray *recentNonces;
  * This method is called if the response encounters some critical error,
  * and it will be unable to fullfill the request.
 **/
-- (void)responseDidAbort:(NSObject<HTTPResponse> *)sender
+- (void)responseDidAbort:(PLWebServerResponse*)sender
 {
 	HTTPLogTrace();
 	
@@ -2687,7 +2708,7 @@ static NSMutableArray *recentNonces;
 		// HTTP version 1.1
 		// Connection should only be closed if request included "Connection: close" header
 		
-		NSString *connection = [request headerField:@"Connection"];
+		NSString *connection = request.headers[@"Connection"];
 		
 		shouldDie = (connection && ([connection caseInsensitiveCompare:@"close"] == NSOrderedSame));
 	}
@@ -2696,7 +2717,7 @@ static NSMutableArray *recentNonces;
 		// HTTP version 1.0
 		// Connection should be closed unless request included "Connection: Keep-Alive" header
 		
-		NSString *connection = [request headerField:@"Connection"];
+		NSString *connection = request.headers[@"Connection"];
 		
 		if (connection == nil)
 			shouldDie = YES;

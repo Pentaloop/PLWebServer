@@ -5,7 +5,7 @@
   #import <CFNetwork/CFNetwork.h>
 #endif
 
-@class HTTPMessage;
+@class PLWebServerRequest;
 
 
 @interface HTTPAuthenticationRequest : NSObject
@@ -24,7 +24,7 @@
 	NSString *cnonce;
 	NSString *response;
 }
-- (id)initWithRequest:(HTTPMessage *)request;
+- (id)initWithRequest:(PLWebServerRequest *)request;
 
 - (BOOL)isBasic;
 - (BOOL)isDigest;

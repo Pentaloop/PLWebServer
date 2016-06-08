@@ -1,5 +1,5 @@
 #import "HTTPAuthenticationRequest.h"
-#import "HTTPMessage.h"
+#import "PLWebServerRequest.h"
 
 #if ! __has_feature(objc_arc)
 #warning This file must be compiled with ARC. Use -fobjc-arc flag (or convert project to ARC).
@@ -13,11 +13,11 @@
 
 @implementation HTTPAuthenticationRequest
 
-- (id)initWithRequest:(HTTPMessage *)request
+- (id)initWithRequest:(PLWebServerRequest *)request
 {
 	if ((self = [super init]))
 	{
-		NSString *authInfo = [request headerField:@"Authorization"];
+		NSString *authInfo = request.headers[@"Authorization"];
 		
 		isBasic = NO;
 		if ([authInfo length] >= 6)

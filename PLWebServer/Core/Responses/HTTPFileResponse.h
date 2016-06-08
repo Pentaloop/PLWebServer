@@ -1,10 +1,10 @@
 #import <Foundation/Foundation.h>
-#import "HTTPResponse.h"
+#import "PLWebServerResponse.h"
 
 @class HTTPConnection;
 
 
-@interface HTTPFileResponse : NSObject <HTTPResponse>
+@interface HTTPFileResponse : PLWebServerResponse
 {
 	HTTPConnection *connection;
 	

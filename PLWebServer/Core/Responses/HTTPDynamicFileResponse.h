@@ -1,5 +1,5 @@
 #import <Foundation/Foundation.h>
-#import "HTTPResponse.h"
+#import "PLWebServerResponse.h"
 #import "HTTPAsyncFileResponse.h"
 
 /**

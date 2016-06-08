@@ -1,10 +1,11 @@
 #import <Foundation/Foundation.h>
 
 @class GCDAsyncSocket;
-@class HTTPMessage;
-@class HTTPServer;
+@class PLWebServerRequest;
+@class PLWebServerResponse;
+@class PLWebServer;
 @class WebSocket;
-@protocol HTTPResponse;
+
 
 
 #define HTTPConnectionDidDieNotification  @"HTTPConnectionDidDie"
@@ -15,15 +16,15 @@
 
 @interface HTTPConfig : NSObject
 {
-	HTTPServer __unsafe_unretained *server;
+	PLWebServer __unsafe_unretained *server;
 	NSString __strong *documentRoot;
 	dispatch_queue_t queue;
 }
 
-- (id)initWithServer:(HTTPServer *)server documentRoot:(NSString *)documentRoot;
-- (id)initWithServer:(HTTPServer *)server documentRoot:(NSString *)documentRoot queue:(dispatch_queue_t)q;
+- (id)initWithServer:(PLWebServer *)server documentRoot:(NSString *)documentRoot;
+- (id)initWithServer:(PLWebServer *)server documentRoot:(NSString *)documentRoot queue:(dispatch_queue_t)q;
 
-@property (nonatomic, unsafe_unretained, readonly) HTTPServer *server;
+@property (nonatomic, unsafe_unretained, readonly) PLWebServer *server;
 @property (nonatomic, strong, readonly) NSString *documentRoot;
 @property (nonatomic, readonly) dispatch_queue_t queue;
 
@@ -41,7 +42,7 @@
 	
 	BOOL started;
 	
-	HTTPMessage *request;
+	PLWebServerRequest *request;
 	unsigned int numHeaderLines;
 	
 	BOOL sentResponseHeaders;
@@ -49,7 +50,7 @@
 	NSString *nonce;
 	long lastNC;
 	
-	NSObject<HTTPResponse> *httpResponse;
+	PLWebServerResponse *httpResponse;
 	
 	NSMutableArray *ranges;
 	NSMutableArray *ranges_headers;
@@ -91,7 +92,7 @@
 - (NSArray *)directoryIndexFileNames;
 - (NSString *)filePathForURI:(NSString *)path;
 - (NSString *)filePathForURI:(NSString *)path allowDirectory:(BOOL)allowDirectory;
-- (NSObject<HTTPResponse> *)httpResponseForMethod:(NSString *)method URI:(NSString *)path;
+- (PLWebServerResponse*)httpResponseForMethod:(NSString *)method URI:(NSString *)path;
 - (WebSocket *)webSocketForURI:(NSString *)path;
 
 - (void)prepareForBodyWithSize:(UInt64)contentLength;
@@ -105,8 +106,8 @@
 - (void)handleUnknownMethod:(NSString *)method;
 - (void)handleRequestedRangeNotSatisfiable:(UInt64)length;
 
-- (NSData *)preprocessResponse:(HTTPMessage *)response;
-- (NSData *)preprocessErrorResponse:(HTTPMessage *)response;
+- (NSData *)preprocessResponse:(PLWebServerRequest *)response;
+- (NSData *)preprocessErrorResponse:(PLWebServerRequest *)response;
 
 - (void)finishResponse;
 
@@ -116,6 +117,6 @@
 @end
 
 @interface HTTPConnection (AsynchronousHTTPResponse)
-- (void)responseHasAvailableData:(NSObject<HTTPResponse> *)sender;
-- (void)responseDidAbort:(NSObject<HTTPResponse> *)sender;
+- (void)responseHasAvailableData:(PLWebServerResponse*)sender;
+- (void)responseDidAbort:(PLWebServerResponse*)sender;
 @end

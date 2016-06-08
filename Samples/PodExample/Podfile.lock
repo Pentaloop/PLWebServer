@@ -1,0 +1,39 @@
+PODS:
+  - CocoaAsyncSocket (7.4.3):
+    - CocoaAsyncSocket/All (= 7.4.3)
+  - CocoaAsyncSocket/All (7.4.3):
+    - CocoaAsyncSocket/GCD
+    - CocoaAsyncSocket/RunLoop
+  - CocoaAsyncSocket/GCD (7.4.3)
+  - CocoaAsyncSocket/RunLoop (7.4.3)
+  - CocoaLumberjack (2.3.0):
+    - CocoaLumberjack/Default (= 2.3.0)
+    - CocoaLumberjack/Extensions (= 2.3.0)
+  - CocoaLumberjack/Core (2.3.0)
+  - CocoaLumberjack/Default (2.3.0):
+    - CocoaLumberjack/Core
+  - CocoaLumberjack/Extensions (2.3.0):
+    - CocoaLumberjack/Default
+  - PLWebServer (1.0):
+    - CocoaAsyncSocket (~> 7.4.3)
+    - CocoaLumberjack (~> 2.3.0)
+    - PLWebServer/Core (= 1.0)
+  - PLWebServer/Core (1.0):
+    - CocoaAsyncSocket (~> 7.4.3)
+    - CocoaLumberjack (~> 2.3.0)
+
+DEPENDENCIES:
+  - PLWebServer (from `../../`)
+
+EXTERNAL SOURCES:
+  PLWebServer:
+    :path: ../../
+
+SPEC CHECKSUMS:
+  CocoaAsyncSocket: a18c75dca4b08723628a0bacca6e94803d90be91
+  CocoaLumberjack: 97fab7ee5f507fe54445cca7ea80f926729cfd15
+  PLWebServer: acf5e33926412abfdbf00c3942b19424e8c359a6
+
+PODFILE CHECKSUM: e25b0f120e0dbc3a84470d3c9bf9a97e06b4a0b6
+
+COCOAPODS: 1.0.1
