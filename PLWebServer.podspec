@@ -15,16 +15,13 @@ Pod::Spec.new do |s|
   s.dependency 'CocoaAsyncSocket', '~> 7.4.3'
   s.dependency 'CocoaLumberjack', '~> 2.3.0'
   
-  s.default_subspec = 'Core'
-  
-  s.subspec 'Core' do |cs|
-    cs.source_files = 'PLWebServer/**/*.{h,m}'
-    cs.requires_arc = true
-    cs.ios.library = 'z'
-    cs.ios.frameworks = 'MobileCoreServices', 'CFNetwork'
-    cs.tvos.library = 'z'
-    cs.tvos.frameworks = 'MobileCoreServices', 'CFNetwork'
-    cs.osx.library = 'z'
-    cs.osx.framework = 'SystemConfiguration'
-  end
+  s.source_files = 'PLWebServer/**/*.{h,m}'
+  s.requires_arc = true
+  s.ios.library = 'z'
+  s.ios.frameworks = 'MobileCoreServices', 'CFNetwork'
+  s.tvos.library = 'z'
+  s.tvos.frameworks = 'MobileCoreServices', 'CFNetwork'
+  s.osx.library = 'z'
+  s.osx.framework = 'SystemConfiguration'
+
 end
