@@ -39,6 +39,6 @@ if(![server start:&error])
 
 
 #Credits
-- Server is based on CocoaHTTTPServer.
-- Routing mechanism is partially based on GCDWebServer.
+- Server is based on **CocoaHTTTPServer**.
+- Routing mechanism is partially based on **GCDWebServer**.
 
