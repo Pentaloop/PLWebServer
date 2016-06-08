@@ -13,13 +13,28 @@ Sometimes developers need an embedded HTTP server in their app. Perhaps it's a s
 -   Very easily extensible
 -   WebDAV is supported too!
 
-<br/>
-Roadmap
--   Add a routing mechanism
--   Improve download performance 
--   Allow WebDav and HTTP on same port
--   Implement UPNP MediaServer
--   Your brilliant ideas...
-<br/>
-<br/>
+
+## Usage
+
+server = [PLWebServer new];
+server.port = 8080;
+[server addHandlerForMethod:@"GET" path:@"/" requestClass:[PLWebServerRequest class] processBlock:^PLWebServerResponse *(__kindof PLWebServerRequest *request) {
+    return [[PLWebServerStringResponse alloc] initWithString:@"Hi I am here!!!"];
+}];
+
+NSError *error = nil;
+if(![server start:&error])
+{
+    NSLog(@"Error starting HTTP Server: %@", error);
+}
+
+
+#Roadmap
+-   Add a routing mechanism (70% Done)
+-   Improve download performance (Pending) 
+-   Allow WebDav and HTTP on same port (Pending)
+-   Implement UPNP MediaServer (Pending)
+-   Your brilliant ideas... (Pending)
+
+
 
