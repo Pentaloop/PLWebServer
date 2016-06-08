@@ -15,7 +15,7 @@ Sometimes developers need an embedded HTTP server in their app. Perhaps it's a s
 
 
 ## Usage
-
+```
 server = [PLWebServer new];
 server.port = 8080;
 [server addHandlerForMethod:@"GET" path:@"/" requestClass:[PLWebServerRequest class] processBlock:^PLWebServerResponse *(__kindof PLWebServerRequest *request) {
@@ -27,7 +27,7 @@ if(![server start:&error])
 {
     NSLog(@"Error starting HTTP Server: %@", error);
 }
-
+```
 
 #Roadmap
 -   Add a routing mechanism (70% Done)
